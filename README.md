@@ -1,3 +1,3 @@
 # SpaceInvaders-Using-OpenGl
 
-Just a copy of famous game, made using glfw and glew.
+Just a copy of famous game, made using GLFW and GLEW.
