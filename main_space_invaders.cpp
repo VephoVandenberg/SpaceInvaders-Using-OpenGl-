@@ -16,8 +16,8 @@
 #define u32 uint32_t
 #define u64 uint64_t
 
-#define WIDTH  448
-#define HEIGHT 512
+#define WIDTH  224
+#define HEIGHT 256
 
 #define NUMBER_OF_BULLETS 150
 
@@ -122,8 +122,8 @@ int main(int argc, char **argv)
     }
 
     
-    GLFWwindow *window = glfwCreateWindow(WIDTH,
-					  HEIGHT,
+    GLFWwindow *window = glfwCreateWindow(2*WIDTH,
+					  2*HEIGHT,
 					  "FUCKING SPACE INVADERS",
 					  0,
 					  0);
@@ -344,8 +344,8 @@ int main(int argc, char **argv)
     game_entity.number_of_bullets = 0;
     game_entity.aliens = new alien[game_entity.number_of_aliens];    
 
-    game_entity.main_player.x = 2*105;
-    game_entity.main_player.y = 2*32;
+    game_entity.main_player.x = 112 - 5;
+    game_entity.main_player.y = 32;
 
     game_entity.main_player.life = 3;
 
@@ -353,11 +353,13 @@ int main(int argc, char **argv)
     {
 	for (u32 xi = 0; xi < 11; xi++)
 	{
-	    game_entity.aliens[yi*11 + xi].x = 2*(16*xi + 20);
-	    game_entity.aliens[yi*11 + xi].y = 2*(17*yi + 128);
-
 	    alien *temp_alien = &game_entity.aliens[yi*11 + xi];
 	    temp_alien->type = (5 - yi) / 2 + 1;
+
+	    sprite temp_sprite = alien_sprites[2*(temp_alien->type - 1)];
+	    
+	    game_entity.aliens[yi*11 + xi].x = 16*xi + 20 + (alien_death_sprite.width - temp_sprite.width)/2;
+	    game_entity.aliens[yi*11 + xi].y = 17*yi + 128;	   	    
 	}
     }
 
@@ -387,12 +389,12 @@ int main(int argc, char **argv)
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);   
 
-    i32 player_move_dir = 1;
+    i32 player_move_dir = 0;
     while (!glfwWindowShouldClose(window) && game_running)
     {
 	clear_buffer(&screen_buffer, screen_color);
-	// animating
-
+	
+	//draw
 	for (u32 ai = 0; ai < game_entity.number_of_aliens; ai++)
 	{
 	    if (!death_counters[ai])
@@ -416,46 +418,6 @@ int main(int argc, char **argv)
 	    }
 	}
 
-	int player_move_dir = 2*move_dir;
-
-	if (player_move_dir)
-	{
-	    if (game_entity.main_player.x + player_sprite.width + player_move_dir >= game_entity.width)
-	    {
-		game_entity.main_player.x = game_entity.width - player_sprite.width;
-	    }
-	    else if ((int)game_entity.main_player.x + player_move_dir <= 0)
-	    {
-		game_entity.main_player.x = 0;
-	    }
-	    else
-	    {
-		game_entity.main_player.x += player_move_dir;
-	    }
-	}
-	
-	draw_sprite(&screen_buffer, &player_sprite,
-		    game_entity.main_player.x, game_entity.main_player.y,
-		    color_to_u32(0, 255, 0));
-	
-	for (u32 i = 0; i < 3; i++)
-	{
-	    alien_animation[i].time++;
-	    if (alien_animation[i].time == alien_animation[i].number_of_frames*alien_animation[i].frame_duration)
-	    {
-		alien_animation[i].time = 0;
-	    }
-	}
-
-	for (u32 ai = 0; ai < game_entity.number_of_bullets; ai++)
-	{
-	    alien temp_alien = game_entity.aliens[ai];
-	    if (temp_alien.type == ALIEN_DEAD && death_counters[ai])
-	    {
-		death_counters[ai]--;
-	    }
-	}
-	
 	for (u32 bi = 0; bi < game_entity.number_of_bullets; bi++)
 	{
 	    bullet temp_bullet = game_entity.bullets[bi];
@@ -464,6 +426,43 @@ int main(int argc, char **argv)
 			color_to_u32(255, 255, 128));
 	}
 
+	draw_sprite(&screen_buffer, &player_sprite,
+		    game_entity.main_player.x, game_entity.main_player.y,
+		    color_to_u32(0, 255, 0));
+
+	// update animations
+
+	for (u32 i = 0; i < 3; i++)
+	{
+	    alien_animation[i].time++;
+	    if (alien_animation[i].time == alien_animation[i].number_of_frames*alien_animation[i].frame_duration)
+	    {
+		alien_animation[i].time = 0;
+	    }
+	}              
+
+	glTexSubImage2D(GL_TEXTURE_2D,
+			0, 0, 0,
+			screen_buffer.width, screen_buffer.height,
+			GL_RGBA, GL_UNSIGNED_INT_8_8_8_8,
+			screen_buffer.data);	
+	
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glfwSwapBuffers(window);
+
+	// Dead aliens handling
+
+	
+	for (u32 ai = 0; ai < game_entity.number_of_bullets; ai++)
+	{
+	    alien temp_alien = game_entity.aliens[ai];
+	    if (temp_alien.type == ALIEN_DEAD && death_counters[ai])
+	    {
+		death_counters[ai]--;
+	    }
+	}
+
+	// Bullets handling
 	for (u32 bi = 0; bi < game_entity.number_of_bullets;)
 	{
 	    game_entity.bullets[bi].y += game_entity.bullets[bi].dir;
@@ -475,7 +474,8 @@ int main(int argc, char **argv)
 		continue;
 	    }
 
-	    for (u32 ai = 0; ai < game_entity.number_of_bullets;  ai++)
+	    // Check hit
+	    for (u32 ai = 0; ai < game_entity.number_of_aliens;  ai++)
 	    {
 		alien temp_alien = game_entity.aliens[ai];
 		if (temp_alien.type == ALIEN_DEAD)
@@ -501,7 +501,26 @@ int main(int argc, char **argv)
 
 	    bi++;
 	}
-	
+
+	// Player handling
+	int player_move_dir = 2*move_dir;
+	if (player_move_dir)
+	{
+	    if (game_entity.main_player.x + player_sprite.width + player_move_dir >= game_entity.width)
+	    {
+		game_entity.main_player.x = game_entity.width - player_sprite.width;
+	    }
+	    else if ((int)game_entity.main_player.x + player_move_dir <= 0)
+	    {
+		game_entity.main_player.x = 0;
+	    }
+	    else
+	    {
+		game_entity.main_player.x += player_move_dir;
+	    }
+	}
+
+	// Process events
 	if (fire_pressed && (game_entity.number_of_bullets < NUMBER_OF_BULLETS))
 	{
 	    game_entity.bullets[game_entity.number_of_bullets].x = game_entity.main_player.x + player_sprite.width/2;
@@ -512,15 +531,7 @@ int main(int argc, char **argv)
 	
 	fire_pressed = false;
 
-	glTexSubImage2D(GL_TEXTURE_2D,
-			0, 0, 0,
-			screen_buffer.width, screen_buffer.height,
-			GL_RGBA, GL_UNSIGNED_INT_8_8_8_8,
-			screen_buffer.data);	
-	
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);	
-	
-	glfwSwapBuffers(window);
+	      
 	glfwPollEvents();
     }
     return 0;
