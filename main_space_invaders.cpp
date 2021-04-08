@@ -108,11 +108,17 @@ void key_callback(GLFWwindow *window,
 		  int key, int scancode, int action, int mods);
 bool sprite_overlap_check(sprite* sp_a, u32 xa, u32 ya,
 			  sprite *sp_b, u32 xb, u32 yb);
+void buffer_draw_text(buffer *screen_bufffer,
+		      sprite *text_spritesheet,
+		      char *text,
+		      u32 x, u32 y,
+		      u32 color);
 
 
 bool game_running = true;
 bool fire_pressed = false;
 int move_dir = 0;
+u32 score = 0;
 
 int main(int argc, char **argv)
 {
@@ -381,7 +387,7 @@ int main(int argc, char **argv)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEARESTw);
 
     glUseProgram(shader_program);
     u32 location = glGetUniformLocation(shader_program, "u_texture");
@@ -451,9 +457,8 @@ int main(int argc, char **argv)
 	glfwSwapBuffers(window);
 
 	// Dead aliens handling
-
 	
-	for (u32 ai = 0; ai < game_entity.number_of_bullets; ai++)
+	for (u32 ai = 0; ai < game_entity.number_of_aliens; ai++)
 	{
 	    alien temp_alien = game_entity.aliens[ai];
 	    if (temp_alien.type == ALIEN_DEAD && death_counters[ai])
@@ -494,6 +499,7 @@ int main(int argc, char **argv)
 		    game_entity.aliens[ai].x -= (alien_death_sprite.width - temp_sprite->width)/2;
 		    game_entity.bullets[bi] = game_entity.bullets[game_entity.number_of_bullets - 1];
 		    game_entity.number_of_bullets--;
+		    score += 10*(4-game_entity.aliens[ai].type);
 		    continue;
 		}
 		
@@ -638,3 +644,12 @@ void key_callback(GLFWwindow *window,
     }
 }
 
+void buffer_draw_text(buffer *screen_bufffer,
+		      sprite *text_spritesheet,
+		      char *text,
+		      u32 x, u32 y,
+		      u32 color)
+{
+    u32 xp = x;
+
+}
