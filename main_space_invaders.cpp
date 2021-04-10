@@ -496,7 +496,7 @@ int main(int argc, char **argv)
 	
 	
 	char credit_text[16];
-	sprintf(credit_text, "CREDIT %21u", credits);
+	sprintf(credit_text, "CREDIT %021u", credits);
 	buffer_draw_text(&screen_buffer, text_spritesheet, credit_text,
 			 164, 7,
 			 color_to_u32(255, 255, 255));
