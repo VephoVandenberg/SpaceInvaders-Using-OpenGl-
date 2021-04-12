@@ -480,12 +480,12 @@ int main(int argc, char **argv)
     glBindBuffer(GL_ARRAY_BUFFER, 0);   
 
     i32 player_move_dir = 0;
+    i32 alien_move_dir = 2;
     while (!glfwWindowShouldClose(window) && game_running)
     {
 	clear_buffer(&screen_buffer, screen_color);
 
 	// Score
-
 	buffer_draw_text(&screen_buffer, text_spritesheet, "SCORE",
 			 4, game_entity.height - text_spritesheet.height - 7,
 			 color_to_u32(255, 255, 255));
@@ -494,6 +494,10 @@ int main(int argc, char **argv)
 			   4 + 2*number_spritesheet.width, game_entity.height - 2*number_spritesheet.height - 12,
 			   color_to_u32(255, 255, 255));
 	
+	for (u32 i = 0; i < game_entity.width; i++)
+	{
+	    screen_buffer.data[game_entity.width*16 + i] = color_to_u32(255, 255, 255);
+	}
 	
 	char credit_text[16];
 	sprintf(credit_text, "CREDIT %021u", credits);
@@ -517,7 +521,7 @@ int main(int argc, char **argv)
 			    color_to_u32(255, 255, 0));
 	    }
 	    else
-	    {
+	    {		
 		sprite_animation animation = alien_animation[temp_alien.type - 1];
 		u32 current_frame = animation.time / animation.frame_duration;
 		sprite *temp_sprite = animation.frames[current_frame];
@@ -539,8 +543,8 @@ int main(int argc, char **argv)
 		    game_entity.main_player.x, game_entity.main_player.y,
 		    color_to_u32(0, 255, 0));
 
+	
 	// update animations
-
 	for (u32 i = 0; i < 3; i++)
 	{
 	    alien_animation[i].time++;
@@ -559,8 +563,7 @@ int main(int argc, char **argv)
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glfwSwapBuffers(window);
 
-	// Dead aliens handling
-	
+	// Dead aliens handling	
 	for (u32 ai = 0; ai < game_entity.number_of_aliens; ai++)
 	{
 	    alien temp_alien = game_entity.aliens[ai];
@@ -612,7 +615,7 @@ int main(int argc, char **argv)
 	}
 
 	// Player handling
-	int player_move_dir = 2*move_dir;
+	player_move_dir = 2*move_dir;
 	if (player_move_dir)
 	{
 	    if (game_entity.main_player.x + player_sprite.width + player_move_dir >= game_entity.width)
@@ -628,6 +631,8 @@ int main(int argc, char **argv)
 		game_entity.main_player.x += player_move_dir;
 	    }
 	}
+
+
 
 	// Process events
 	if (fire_pressed && (game_entity.number_of_bullets < NUMBER_OF_BULLETS))
